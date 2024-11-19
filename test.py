@@ -1,40 +1,28 @@
 import os
 import serial
 
-# 配置 USB 串行端口
-USB_PORT = "/dev/cu.usbmodem11101"  # 根据实际设备修改
+USB_PORT = "/dev/cu.usbmodem11101"
 BAUD_RATE = 115200
+PRIVATE_KEY = b"abcdefghijklmnopqrstuvwx12345678"
 
-# 测试用共享密钥（与 Pico 的 PRIVATE_KEY 对应）
-SHARED_KEY = b"abcdefghijklmnopqrstuvwx12345678"
-
-# 签名验证函数
-def verify_signature(challenge, signature):
-    expected_signature = bytes(
-        (b ^ SHARED_KEY[i % len(SHARED_KEY)]) for i, b in enumerate(challenge)
-    )
-    return signature == expected_signature
+def verify_signature(challenge, signature, private_key):
+    expected_signature = bytes((b ^ private_key[i % len(private_key)]) for i, b in enumerate(challenge))
+    return expected_signature == signature
 
 def main():
+    print("Connecting to hardware wallet...")
     with serial.Serial(USB_PORT, BAUD_RATE, timeout=2) as ser:
-        print("Connecting to hardware wallet...")
-
-        # 生成挑战字符串（随机 32 字节）
         challenge = os.urandom(32)
-        print("Challenge sent:", challenge.hex())
+        print(f"Challenge sent: {challenge.hex()}")
         ser.write(challenge)
 
-        # 接收签名
-        signature = ser.read(32)
-        print("Raw signature received:", signature.hex())
-        if len(signature) != 32:
-            print("Error: Invalid signature length")
-            return
+        raw_signature = ser.read(32)
+        print(f"Raw signature received: {raw_signature.hex()}")
 
-        # 验证签名
-        if verify_signature(challenge, signature):
-            print("Signature verified: Access granted")
+        if len(raw_signature) == 32 and verify_signature(challenge, raw_signature, PRIVATE_KEY):
+            print("Verification successful: Access granted")
         else:
             print("Verification failed: Access denied")
 
-main()
+if __name__ == "__main__":
+    main()
