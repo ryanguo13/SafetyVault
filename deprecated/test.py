@@ -1,7 +1,7 @@
 import os
 import serial
 
-USB_PORT = "/dev/cu.usbmodem11101"
+USB_PORT = "/dev/ttyACM0"
 BAUD_RATE = 115200
 PRIVATE_KEY = b"abcdefghijklmnopqrstuvwx12345678"
 
