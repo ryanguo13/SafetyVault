@@ -29,17 +29,7 @@ def generate_safe_random(length, min_val=33, max_val=126):
     # Map each byte to the range [min_val, max_val]
     return bytes(min_val + (byte % range_size) for byte in random_bytes)
 
-def main():
-
-    '''debug session'''
-    logfile = open("./pico_output_log", "ab") 
-
-        
-    
-    
-    
-    
-    
+def first_key_verify():
 
     print("Connecting to hardware wallet...")
     with serial.Serial(USB_PORT, BAUD_RATE) as ser:
@@ -59,33 +49,15 @@ def main():
             
             print(f"Challenge sent")
             ser.write(challenge)
-
-            '''debug session'''
-            logfile.write(b'writed content from vault\n')
-            logfile.write(challenge.hex().encode('utf-8'))
-            logfile.write(b'\n')
-# ok not ok ok not 
-
-#  同步异步 3次没用 
-#  gui
-#  图纸
-#  display i2c  (wait line)
-#  vault 软件编写
-
             print("wait end, read start")
             raw_signature = ser.read(len(PRIVATE_KEY))
-
-            '''debug session'''
-            logfile.write(b'readed content from pico\n')
-            logfile.write(raw_signature.hex().encode('utf-8'))
-            logfile.write(b'\n')
 
             # this is sync block, so it will wait until receive input
             print(f"Raw signature received ")
 
             if len(raw_signature) == len(PRIVATE_KEY) and verify_signature(challenge, raw_signature, PRIVATE_KEY):
                 print("Verification successful: Access granted")
-                exit(0)
+                return True
                 #here UNLOCK VAULT!!!
             else:
                 print("Verification failed: Access denied")
@@ -93,11 +65,58 @@ def main():
             maxtry -= 1
             time.sleep(1)
             print("try again\n")
-
-        logfile.write(b'one test terminated\n\n')
-        logfile.close()
         exit(1)#it means three try fail, systemd should record this.
         
 
+def second_key_verify():
+    """deprecated"""
+    pass
+
+
+import RPi.GPIO as GPIO
+import time
+
+def set_servo_angle(pwm, angle):
+    """
+    adjust pwm to adjust sg90 angle
+    :param pwm: a PWN micropython object, such as PWM(PIN(0))
+    :param angle: the valid para is ranging from 90 to 210，
+    90 is unlock, 210 is lock.
+    """
+    #transform the angle to PWM duty(功率）
+    angle = int(angle)
+    if ((angle < 90) or (angle > 210)):
+        return
+    #above code prevent you from breaking the machine structure
+    #机械结构是焊死的，超过这个角度，电机和保险柜必有一尸
+    if((angle!=90) and (angle != 210)):
+        return
+    # for convenience, only "lock" and "unlock" state is allowed
+    #this save me from judging the state of lock.
+    duty = 2500 + int((angle / 180) * 5000)  # 0度对应 2.5%，180度对应 7.5%
+    pwm.duty_u16(duty)
+
+
+
+
+
 if __name__ == "__main__":
-    main()
+    time.sleep(2)
+    #just set a timer waiting for private key ready. increase success rate
+    checkresult = False
+    checkresult = first_key_verify()
+    #second_key_verify()
+    
+    if checkresult == True:
+
+        servo_pin = 12  # BCM 引脚号（物理引脚 32）????what am i writing
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(servo_pin, GPIO.OUT)
+
+        servo = GPIO.PWM(servo_pin, 50)  
+
+        try:
+            pass
+        finally:
+            servo.stop()
+            GPIO.cleanup()

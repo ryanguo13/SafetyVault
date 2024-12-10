@@ -1,0 +1,6 @@
+'''
+this is not a py file, i don't know why stupid vscode recognize this as a python
+and even enable syntax checking, making my text rainbow
+'''
+sudo nano /etc/udev/rules.d/99-mydevice.rules
+SUBSYSTEM=="tty", KERNEL=="ttyACM0", ACTION=="add", RUN+="/usr/local/bin/my_device_script"
