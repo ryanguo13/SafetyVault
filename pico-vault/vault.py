@@ -74,6 +74,7 @@ def second_key_verify():
 #import RPi.GPIO as GPIO
 import time
 
+"""Deprecated"""
 def set_servo_angle(pwm, angle):
     """
     adjust pwm to adjust sg90 angle
@@ -86,7 +87,6 @@ def set_servo_angle(pwm, angle):
     if ((angle < 90) or (angle > 210)):
         return
     #above code prevent you from breaking the machine structure
-    #机械结构是焊死的，超过这个角度，电机和保险柜必有一尸
     if((angle!=90) and (angle != 210)):
         return
     # for convenience, only "lock" and "unlock" state is allowed
