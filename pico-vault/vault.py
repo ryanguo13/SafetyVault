@@ -35,9 +35,7 @@ def first_key_verify():
     with serial.Serial(USB_PORT, BAUD_RATE) as ser:
 
         """
-        I spend fucking 6 hours debugging for below line of code, only because of 
-        historical terminal escape sequence reasons. I won't for give REPL and the 
-        AI who generate this code. I will kill you all!😠😡
+        dead
         """
         #challenge = os.urandom(len(PRIVATE_KEY))
         challenge = generate_safe_random(len(PRIVATE_KEY), 33, 126)
@@ -73,7 +71,7 @@ def second_key_verify():
     pass
 
 
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import time
 
 def set_servo_angle(pwm, angle):
@@ -109,14 +107,18 @@ if __name__ == "__main__":
     
     if checkresult == True:
 
-        servo_pin = 12  # BCM 引脚号（物理引脚 32）????what am i writing
+        servo_pin = 12  
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(servo_pin, GPIO.OUT)
 
         servo = GPIO.PWM(servo_pin, 50)  
 
         try:
-            pass
+            servo.start(12.5)
+            time.sleep(7)
+
+            servo.ChangeDutyCycle(7.5)
+            time.sleep(2)
         finally:
             servo.stop()
             GPIO.cleanup()
