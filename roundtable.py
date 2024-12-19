@@ -1,3 +1,12 @@
+import pico_vault.vault_util.udevrunner.udevrunner as testclass
+
+mynewclass = testclass.udevrunner()
+
+
+mynewclass.connect("/dev/ttyACM0")
+result = mynewclass.query_connected_info()
+print(result)
+"""
 import pyotp
 import qrcode
 
@@ -11,8 +20,4 @@ print(hotp_registry)
 
 img = qrcode.make(hotp_registry)
 img.show()
-
-
-
-
-
+"""
