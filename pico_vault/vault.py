@@ -1,8 +1,9 @@
 import os
+import sys
 import time
 import serial
 import datetime
-import vault_util.udevrunner.udevrunner as testclass
+import vault_util.udevrunner.udevrunner as serialrecorder
 
 '''this is the vault simulation, these code will burn into the vault micro-controller'''
 USB_PORT = "/dev/ttyACM0"
@@ -116,6 +117,7 @@ class recorder:
         line_content += "Device Type: Respberry Pico\n"
         line_content += f"Device Serial Number: {report[1]}\n"
         self.log.write(line_content)
+        self.log.write("\n")
 
         pass
 
@@ -167,7 +169,16 @@ if __name__ == "__main__":
     #just set a timer waiting for private key ready. increase success rate
     checkresult = False
     try:
-        log_recorder = recorder
+        if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
+            loggertxt = sys.argv[1]
+        else:
+            loggertxt = "/home/phage/codev/SafetyVault/pico_vault/pico_eject_errlog"
+        
+        log_recorder = recorder(loggertxt)
+        serial_recorder = serialrecorder.udevrunner()
+        serial_recorder.connect("/dev/ttyACM0")
+
+
         key_return = first_key_verify()
         checkresult = key_return[0]
         #second_key_verify()
@@ -190,14 +201,17 @@ if __name__ == "__main__":
             Cust_interrupt().mastercallSerialJudge(message=b"/dev/ttyACM0", slave=key_return[1])
             #Cust_interrupt().pathexistJudge("/dev/ttyACM0")
         else:
-            log_recorder.printk(report="/dev/ttyACM0")
+            attacker_serial_id = serial_recorder.query_connected_info()
+            attacker_detail_list = ["/dev/ttyACM0", attacker_serial_id]
+            log_recorder.printk(report=attacker_detail_list)
 
             
     except Exception as e:
-        type(e)
+        print(type(e))
         print(e)
     finally:
         print("close door")
+        log_recorder.close()
         key_return[1].close()
         '''
         servo.ChangeDutyCycle(7.5)

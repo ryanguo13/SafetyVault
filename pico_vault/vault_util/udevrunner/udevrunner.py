@@ -31,7 +31,7 @@ class udevrunner:
             parent_device = parent_device.parent
         else:
             print("未找到包含序列号的设备")
-            return None
+            return "this device don't have ordinary serial number"
 
 
 
