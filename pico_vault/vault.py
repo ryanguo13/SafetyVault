@@ -4,6 +4,7 @@ import time
 import serial
 import datetime
 import vault_util.udevrunner.udevrunner as serialrecorder
+from vault_util.display.display import foureyes
 
 '''this is the vault simulation, these code will burn into the vault micro-controller'''
 USB_PORT = "/dev/ttyACM0"
@@ -32,13 +33,13 @@ def generate_safe_random(length, min_val=33, max_val=126):
     # Map each byte to the range [min_val, max_val]
     return bytes(min_val + (byte % range_size) for byte in random_bytes)
 
-def first_key_verify() -> list:
+def first_key_verify(displayer) -> list:
     """
     return a list in such format: [boolean: success_or_not, object:picokey_serial]
     one call this function always need to manually close the serial port
     """
 
-    print("Connecting to hardware wallet...")
+    displayer.display_text(0,0,"detect key")
     ser =  serial.Serial(USB_PORT, BAUD_RATE)
 
     #challenge = os.urandom(len(PRIVATE_KEY))
@@ -48,20 +49,20 @@ def first_key_verify() -> list:
     while maxtry > 0:
         time.sleep(0.5)
         
-        print(f"Challenge sent")
+        displayer.display_text(0,10,f"challenge sent")
         ser.write(challenge)
         print("wait end, read start")
         raw_signature = ser.read(len(PRIVATE_KEY))
 
         # this is sync block, so it will wait until receive input
-        print(f"Raw signature received ")
+        displayer.display_text(0,20,f"rsp received, checking")
 
         if len(raw_signature) == len(PRIVATE_KEY) and verify_signature(challenge, raw_signature, PRIVATE_KEY):
-            print("Verification successful: Access granted")
+            displayer.display_text(0,30,f"verify success, door unlock")
             return [True, ser]
             #here UNLOCK VAULT!!!
         else:
-            print("Verification failed: Access denied")
+            displayer.display_text(0,30,f"verify fail")
         
         maxtry -= 1
         time.sleep(1)
@@ -174,12 +175,13 @@ if __name__ == "__main__":
         else:
             loggertxt = "/home/phage/codev/SafetyVault/pico_vault/pico_eject_errlog"
         
+        displayer = foureyes()
         log_recorder = recorder(loggertxt)
         serial_recorder = serialrecorder.udevrunner()
         serial_recorder.connect("/dev/ttyACM0")
 
 
-        key_return = first_key_verify()
+        key_return = first_key_verify(displayer=displayer)
         checkresult = key_return[0]
         #second_key_verify()
 
@@ -210,7 +212,7 @@ if __name__ == "__main__":
         print(type(e))
         print(e)
     finally:
-        print("close door")
+        displayer.display_text(0,40,f"close door")
         log_recorder.close()
         key_return[1].close()
         '''
